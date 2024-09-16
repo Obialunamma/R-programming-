@@ -1,0 +1,232 @@
+---
+title: "R Class"
+output: html_notebook
+---
+
+# Introduction
+Transforming a  wide data it into 5 columns: Store, Category, Date, Sales, and Margin, by unpivoting and pivoting, while handling the dates, metric, and sales/margin columns.
+
+### Step 1: Load the necessary libraries
+
+```{r}
+library(tidyverse)
+```
+
+
+### Step 2: Read the dataset
+
+```{r}
+# using the import dataset gui
+p <- read.csv("~/Excel datsets/PQ Exercise 1d.csv")
+   print(p)
+```
+
+
+```{r}
+#coping as path, you either use double backward slash \\ or a single forward slash
+
+ read.csv("C:\\Users\\ADMIN\\Documents\\Excel datsets\\PQ Exercise 1d.csv", stringsAsFactors = FALSE)
+```
+
+
+### Step 3: Unpivot the dataset using pivot_longer()
+Unpivoting will convert the date columns into rows under a single Date column. Before doing that, let's rename the first few columns for clarity.
+
+
+```{r}
+# Rename the first columns to proper names
+colnames(p)[1:3] <- c("Metric", "Store", "Category")
+
+# Pivot longer, converting date columns into a single column 'Date'
+ P <- p %>%
+  pivot_longer(cols = contains("X"), names_to = "Date", values_to = "Value") 
+
+```
+
+
+```{r}
+# removing the quater columns
+p <- P %>% 
+  select(-starts_with("Q"))
+```
+
+
+### Step 4: Convert Date into a Date format
+First we need to convert the date strings from the format X01.01.2017 to 1/1/2017 by removing prefix "x" and replacing periods "." with slash using the "gsub()" function
+
+
+```{r}
+p$Date <- gsub("^X", "", p$Date)  # Remove the leading 'X'
+p$Date <- gsub("\\.", "/", p$Date)  # Replace '.' with '/'
+
+```
+
+
+
+
+```{r}
+# Convert 'Date' column to Date format (the dates are in 'm/d/yyyy' format)
+ p$Date <- as.Date(p$Date, format = "%m/%d/%Y")
+
+```
+
+
+### Step 5: Remove non-date values in the Date column
+Remove rows where the Date column contains non-date values like "Q1 2017".
+
+
+```{r}
+# Filter out rows with non-date values (like 'Q1 2017')
+any(is.na(p$Date))
+p <- p %>% filter(!is.na(Date))
+
+```
+
+
+## Step 6: Filling up blanks in column 'metric'
+
+```{r}
+# Convert blanks to NA
+p <- p %>%
+  mutate(Metric = na_if(Metric, ""))  # Convert empty strings to NA
+
+# Fill down the 'Metric' column to handle NA values
+p <- p %>%
+  fill(Metric, .direction = "down")
+
+```
+
+
+### Step 7: Pivoting metric and values to create different columns for sales and margin
+
+```{r}
+# Spread the 'Metric' column into 'Sales' and 'Margin'
+p <- p %>%
+  pivot_wider(names_from = Metric, values_from = Value)
+```
+
+
+```{r}
+# Filter out rows where both 'Sales' and 'Margin' are NA
+p <- p %>%
+  filter(!(is.na(Sales) & is.na(Margin)))
+
+view(p)
+
+```
+
+
+## Analysis and Visualization
+
+
+```{r}
+# Summarize total sales and average margin by Store
+ p %>%
+  group_by(Store) %>%
+  summarise(
+    Total_Sales = sum(Sales, na.rm = TRUE),
+    Avg_Margin = mean(Margin, na.rm = TRUE)
+  )
+
+```
+
+
+```{r}
+# Summarize total sales and average margin by Category 
+ p %>%
+  group_by(Category) %>%
+  summarise(
+    Total_Sales = sum(Sales),
+    Avg_Margin = mean(Margin)
+  )
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+# Visualize how sales vary over time.
+ggplot(p, aes(x = Date, y = Sales, color = as.factor(Store))) +
+  geom_line() +
+  labs(title = "Sales Over Time",
+       x = "Date",
+       y = "Sales",
+       color = "Store") +
+  theme_minimal()
+
+```
+
+
+```{r}
+# Total Sales by Store
+ggplot(p, aes(x = as.factor(Store), y = Sales, fill = as.factor(Store))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Sales by Store",
+       x = "Store",
+       y = "Total Sales") +
+  theme_minimal()
+
+# Average Margin by Store
+ggplot(p, aes(x = as.factor(Store), y = Avg_Margin, fill = as.factor(Store))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Margin by Store",
+       x = "Store",
+       y = "Average Margin") +
+  theme_minimal()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Summarize the Data by Month and Year
+
+```{r}
+# Summarize total sales and average margin by Month and Year
+summary_by_month_year <- p %>%
+  group_by(Year, Month) %>%
+  summarise(
+    Total_Sales = sum(Sales, na.rm = TRUE),
+    Avg_Margin = mean(Margin, na.rm = TRUE)
+  ) %>%
+  arrange(Year, Month)
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+

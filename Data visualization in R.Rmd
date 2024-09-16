@@ -1,0 +1,236 @@
+---
+title: "Data Visualization"
+author: "Chinazom"
+date: "2024-04-04"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(modeldata)
+
+```
+
+
+```{r}
+?crickets
+View(crickets)
+```
+
+# The basics
+## Creating a chart for temp and rate
+### geom_point known as **scatter plot** is good for two quantitative variable
+```{r}
+
+ggplot(crickets, aes(x = temp, 
+                     y = rate)) + 
+  geom_point()
+```
+ 
+## To label the chart
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate)) + 
+  geom_point() +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)")
+```
+
+#### To change the color of the charts based on the different species, you add color = species
+
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate,
+                     color = species)) + 
+  geom_point() +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       color = "Species",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)")
+```
+
+### To get a darker shade of the color using scale_color_brewer
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate,
+                     color = species)) + 
+  geom_point() +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       color = "Species",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)") +
+       scale_color_brewer(palette = "Dark2")
+```
+
+### Modifiying basic properties of the plot
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate)) + 
+  geom_point(color = "blue",
+             size = 2,
+             shape = "square") +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       title = "Cricket chirps",
+```
+
+
+```{r}
+caption = "Source: McDonald (2009)")
+
+```
+
+
+## Adding another layer geom_smooth to show the direction of the relationship
+```{r}
+
+ggplot(crickets, aes(x = temp, 
+                     y = rate)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)")
+
+```
+
+### To modify the geom_smooth
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate)) + 
+  geom_point() +
+  geom_smooth(method = "lm", # to make the line linear
+              se = FALSE) + # se = false takes away the shadow from the line
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)")
+```
+```{r}
+ggplot(crickets, aes(x = temp, 
+                     y = rate,
+                     color = species)) + # to differentiate between the different species 
+  geom_point() +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  labs(x = "Temperature",
+       y = "Chirp rate",
+       color = "Species",
+       title = "Cricket chirps",
+       caption = "Source: McDonald (2009)") +
+  scale_color_brewer(palette = "Dark2") # to make the colors darker
+```
+## Other plots
+### Histogram- mostly use for one quantitative variable 
+
+```{r}
+ggplot(crickets, aes(x = rate)) + 
+  geom_histogram(bins = 15) #  bin represents a group or a segment of the data, interval into which the range of data values is divided
+```
+
+
+### Geom_freqpoly -  uses lines to represent the frequency distribution of a continuous variable.
+
+```{r}
+ggplot(crickets, aes(x = temp)) + 
+  geom_freqpoly(bins = 15)
+```
+### Bar chart mostly used for one categorical variable
+
+```{r}
+ggplot(crickets, aes(x = species)) + 
+  geom_bar()
+```
+### Modification of the Bar chart output
+#### To change the outer and inner color of the bar
+```{r}
+ggplot(crickets, aes(x = species)) + 
+  geom_bar (color = "black", # color function works for the borders of the chart
+fill = "lightblue") # fill for the inside
+```
+### To give the values in a variable different colors - here species
+
+```{r}
+ggplot(crickets, aes(x = species, 
+                     fill = species)) + 
+  geom_bar(show.legend = FALSE) + # to remove the legend from the chart 
+  scale_fill_brewer(palette = "Dark2") # to make the fill darker 
+```
+
+
+```{r}
+ggplot(crickets, aes(x = species, y = count)) + 
+  geom_bar(stat = "identity")
+
+```
+
+### Geom_boxplot is good for one categorical and one quantitative variables
+#### Boxplot is a visual representation of your 5 number summary; minimum - the line below
+#### 1st quartile, the 2nd quartile which is the medium (the line in-between ), the 3rd quartile and the max - the line above
+
+```{r}
+ggplot(crickets, aes(x = species, 
+                     y = rate,
+                     color = species)) + 
+  geom_boxplot(show.legend = FALSE) +
+  scale_color_brewer(palette = "Dark2") # To make the color darker
+```
+
+### Theme() - control all non-data display. Use theme() if you just need to tweak the display of an existing, we have  theme.minimal,classic,bw,light etc
+
+#### To remove the gray background in the chart using theme minimal
+```{r}
+ggplot(crickets, aes(x = species, 
+                     y = rate,
+                     color = species)) + 
+  geom_boxplot(show.legend = FALSE) +
+  scale_color_brewer(palette = "Dark2") +
+  theme_minimal()
+```
+
+### Faceting
+
+#### Without Faceting
+```{r}
+ggplot(crickets, aes(x = rate, 
+                     fill = species)) + 
+  geom_histogram(bins = 15) +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+#### With faceting
+```{r}
+
+ggplot(crickets, aes(x = rate,
+                     fill = species)) + 
+  geom_histogram(bins = 15,
+                 show.legend = FALSE) + 
+  facet_wrap(~species) +
+  scale_fill_brewer(palette = "Dark2")
+```
+#### To have just one column - the second bar will be below the first 
+```{r}
+
+ggplot(crickets, aes(x = rate,
+                     fill = species)) + 
+  geom_histogram(bins = 15,
+                 show.legend = FALSE) + 
+  facet_wrap(~species,
+             ncol = 1) +
+  scale_fill_brewer(palette = "Dark2") + 
+  theme_minimal()
+```
+
+

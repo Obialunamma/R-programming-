@@ -1,0 +1,322 @@
+---
+title: "How Can a Wellness Technology Company Play It Smart?"
+author: "Chinazom Jennifer Okoli"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+## Introduction
+
+Bellabeat is a high-tech company that manufactures health-focused smart products for women. Collecting data on activity, sleep, stress, and reproductive health has allowed Bellabeat to empower women with knowledge about their own health and habits. 
+Bellabeat products comprises of the  Bellabeat app, Leaf (which is worn as a bracelet, necklace, or clip), Time (wellness watch) and Spring (water bottle). All the other products are connected to the Bellabeat App. 
+
+Urška Sršen, co-founder and Chief Creative Officer of Bellabeat, believes that analyzing smart device fitness data could help unlock new growth opportunities for the company.Sršen asks to analyze smart device usage data in order to gain insight into how consumers use non-Bellabeat smart devices.
+We're to focus on Bellabeat's product, **Time**, and examine data from **fitness tracker**—a smart device similar to Bellabeat's, made by a different company called **Fitbit**. This analysis aims to understand how consumers are utilizing these smart devices.
+
+A dataset which has a total of 18 data files, named <FitBit Fitness Tracker Data> (CC0: Public Domain, dataset made available through Mobius) was given which contains personal fitness tracker from thirty eligible Fitbit users who consented to the submission of personal tracker data. This includes information about daily activity, steps, tracker distance, calories, heart rate, sedentary time and sleep monitoring, that can be used to explore users’ habits.
+
+The tool we're using for this study is RMarkdown within RStudo. This will enable us to conduct analysis, create visualizations, document our work, and facilitate seamless sharing of results.
+
+## Buisness Goal
+
+* To find some trends in smart device usage.
+* How these trends could apply to Bellabeat customers.
+* How these trends could help influence Bellabeat marketing strategy.
+
+## Installing and loading common packages and libraries for our analysis.
+
+First off, we set a CRAN mirror;this specifies the location from which R will download packages when we install them. CRAN (Comprehensive R Archive Network) is a network of servers worldwide that mirror the same collection of R packages. By setting a CRAN mirror, we are telling R where to fetch the packages from.
+
+The code below is a combination of R code and Markdown syntax and is typically used in R Markdown (Rmd) documents.
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+# Set a CRAN mirror
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+```
+
+
+```{r}
+# Install packages
+install.packages("tidyverse")
+install.packages("dplyr")
+library("tidyverse")
+library(dplyr)
+library(magrittr)
+library(purrr)
+
+
+```
+
+## Loading and exploring our CSV files
+Here we created data frames with the same name as our CSV files from the dataset and import them using the file path;
+Typed in the data frame name, the assignment operator(<-), then the read.csv() which is the function for importing CSV files in R finally the file path which was gotten by clicking on the data file then **copy as path**. Paste in the parenthesis of the read.csv.
+
+```{r}
+ dailyActivity_merged <- read.csv("C:/Users/ADMIN/OneDrive/Documents/Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv")
+
+ View(dailyActivity_merged)
+ 
+ sleepDay_merged <- read.csv("C:/Users/ADMIN/OneDrive/Documents/Fitabase Data 4.12.16-5.12.16/sleepDay_merged.csv")
+ 
+ View(sleepDay_merged)
+```
+
+We will concentrate on specific CSV files for this analysis among the provided 18, as many share identical data, and a few contain incomplete data which won't be relevant for this study.
+
+
+## Understanding some summary statistics
+In this analysis, we are consolidating our data by computing the average of each variable.
+Data is aggregated and averaged in analysis to provide a summary measure that represents the central tendency of a set of values. This simplifies complex datasets, highlights overall trends, and facilitates easier interpretation of the information. 
+
+Averaging helps smooth out variations, making it a commonly used method for obtaining a representative value from a larger dataset.
+
+The syntax used in the first analysis was explained below as a guide for the subsequent analysis.
+
+### To create a new data frame 'calculated_average_activity' to know the average activity of each participant for this period of time.
+
+```{r}
+
+calculated_average_activity <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise(
+    AVGVeryActive = mean(as.integer(VeryActiveMinutes), na.rm = TRUE),
+    AVGFairlyActive = mean(as.integer(FairlyActiveMinutes), na.rm = TRUE),
+    AVGLightActive = mean(as.integer(LightlyActiveMinutes), na.rm = TRUE),
+    AVG_Activity = mean(
+      as.integer(VeryActiveMinutes) +
+      as.integer(FairlyActiveMinutes) +
+      as.integer(LightlyActiveMinutes),
+      na.rm = TRUE
+    )
+  )
+```
+
+### Let's break down the syntax and understand each part:
+
+**Calculation of Average Activity:**
+
+* AVGVeryActive: Average value of VeryActiveMinutes for each ID.
+* AVGFairlyActive: Average value of FairlyActiveMinutes for each ID.
+* AVGLightActive: Average value of LightlyActiveMinutes for each ID.
+
+**Calculation of Total Activity:**
+
+* AVG_Activity: Average total activity, which is the sum of VeryActiveMinutes, FairlyActiveMinutes, and LightlyActiveMinutes for each ID.
+
+**Integer Conversion:**
+The **as.integer function** is applied to the calculated averages to ensure they are integers.
+
+**Data Frame Creation:**
+
+* The results are stored in a new data frame named 'calculated_average_activity'.
+* Each row of this data frame corresponds to a unique ID, and the columns represent the calculated average values.
+
+
+
+```{r}
+# Print the result
+print(calculated_average_activity)
+
+```
+
+### To create a table 'calculated_average_inactivity' using SedentaryTime from the dailyActive_merged data frame, TotalMinutesAsleep and TotalTimeInBed from the sleepDay_merged data frame to know the average inactivity time of the participants.
+
+**Calculating the AVGSedentaryTime**
+
+```{r}
+averageSedentary_time <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise(
+    AVG_SedentaryMinutes = as.integer(mean(as.integer(SedentaryMinutes), na.rm = TRUE))
+  )
+
+```
+
+**Calculating the average of TotalMinutesAsleep and TotalTimeInBed as 'average_BedTime'**
+
+```{r}
+average_BedTime <- sleepDay_merged %>%
+  group_by(Id) %>%
+  summarise(
+    AVG_TotalMinutesAsleep = as.integer(mean(as.integer(TotalMinutesAsleep), na.rm = TRUE)),
+    AVG_TotalTimeInBed = as.integer(mean(as.integer(TotalTimeInBed), na.rm = TRUE))
+)
+```
+
+### To merge the both data frame as average_Inactivity
+
+```{r}
+average_Inactivity <- inner_join(average_BedTime, averageSedentary_time, by = "Id")
+```
+
+
+```{r}
+# Print the result
+print(average_Inactivity)
+```
+
+### To calculate the average TotalSteps and TrackerDistance as 'averageSteps_Distance'
+
+```{r}
+averageSteps_Distance <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise(
+    AVG_TotalSteps = as.integer(mean(as.integer(TotalSteps), na.rm = TRUE)),
+    AVG_TrackerDistance = mean(TrackerDistance, na.rm = TRUE),
+  )
+```
+
+
+```{r}
+# Print the result
+print(averageSteps_Distance)
+
+```
+
+### To calculate average Calories 
+
+```{r}
+average_Calories <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise(
+    AVG_Calories = as.integer(mean(as.integer(Calories), na.rm = TRUE))
+  )
+```
+
+```{r}
+print(average_Calories)
+```
+
+### To merge all calculated data frames into a data frame 'FitbaseData_Calculated' for easy visualization 
+
+```{r}
+# List of data frames
+df_list <- list(average_BedTime, average_Calories, average_Inactivity, averageSedentary_time, averageSteps_Distance, calculated_average_activity)
+
+# Merge data frames in the list based on the common column (Id)
+FitbaseData_Calculated <- reduce(df_list, merge, by = "Id",all = TRUE)
+
+# Resulting data frame (FitbaseData_Calculated)
+print(FitbaseData_Calculated)
+```
+Note: We use the **all = TRUE** to return all records from all the data frames, no data was filtered out. This is because the data frames do not have the same number of records, All except 'average_BedTime which has 24, has 33 records. Also as a result of this merging, columns that exist in more than one data frame are labeled with ".x" and ".y" for differentiation. 
+
+
+## Plotting some explorations using Scatter plot and Smoothing.
+
+The relationship between two variables in a scatter plot provides valuable insights into overall activity levels. A negative correlation suggests that as one variable increases, the other decreases, indicating a potential link between them. Conversely, a positive correlation implies that higher values in one variable are associated with higher values in the other. A zero correlation suggests the absence of a linear relationship between two variables. It indicates that changes in one variable are not systematically associated with changes in the other, meaning that as values of one variable vary, there is no consistent pattern or trend in the values of the other variable. 
+
+Adding Smoothing to a scatter plot enhances the interpretability of the plot, making it easier to identify general patterns and draw insights.
+
+Understanding this correlation helps tailor health recommendations and customize product messaging and features to address the specific needs of different customer segments, enhancing overall user engagement and satisfaction.
+
+Let's find trends using visualization, we first load our plotting package - ggplot2
+```{r}
+library("ggplot2")
+```
+
+**How are the number of steps taken related to the duration of sedentary minutes?**
+
+```{r}
+# Creating scatter plot
+ggplot(data=FitbaseData_Calculated, aes(x=AVG_SedentaryMinutes.y, y=AVG_TotalSteps))+ 
+geom_point() +
+labs(title = "Scatter Plot", x = "AVG_SedentaryMinutes.y", y = "AVG_TotalSteps")+
+  geom_smooth()
+```
+
+
+The trend in this scatter plot shows that as **Average Total Steps** increases, **average Sedentary Minutes** decreases. This suggests that there is a **negative relationship** between Average Total Steps and average Sedentary Minutes. In other words, the more steps a person takes, the less time they spend sitting. This could imply that physical activity is inversely related to sedentary behavior.
+
+**A summarized explanation of the above syntax which will guide as a reference for subsequent ones.**
+
+The syntax employs functions from the "ggplot2" package in R. The ggplot() function initializes the plot, aes() specifies the aesthetic mappings that is which variable takes either the x or y axis. 
+The geom_point() for scattered plot, adds points to the plot, labs() sets the title and axis labels, and geom_smooth() incorporates a smoothed trend line. Additionally, drop_na() is used for handling missing values in the data.
+
+ **Relationship between activity and sleep**
+ 
+```{r}
+ggplot(data=FitbaseData_Calculated, aes(x=AVG_Activity, y=AVG_TotalMinutesAsleep.x,drop_na()))+ 
+  geom_point() +
+  labs(title = "Scatter Plot", x = "AVG_Activity", y = "AVG_TotalMinutesAsleep.x")+
+  geom_smooth()
+```
+
+
+The trend in this scatter plot shows that as **Average Activity** increases, **average Minutes Asleep** decreases. This relationship is an **inverse relationship**, meaning that as one variable increases, the other decreases. 
+The graph shows that people who have higher levels of physical activity tend to sleep less than those who have lower levels of physical activity. This could be because active people have more energy, need less rest, are more occupied or have different lifestyles than less active people. 
+
+However, this graph does not imply causation, only correlation. There could be other factors that affect both variables, such as age, health, or environment.
+
+
+**To check relationship between Tracker Distance and Total Steps**
+
+```{r}
+ggplot(data=FitbaseData_Calculated, aes(x=AVG_TrackerDistance, y=AVG_TotalSteps,))+ 
+  geom_point() +
+  labs(title = "Scatter_plot", x = "AVG_TrackerDistance", y = "AVG_TotalSteps")+
+  geom_smooth()
+```
+
+
+The trend in this scatter plot shows that as the **average tracker distance** increases, the **average total steps** also increases. This suggests that there is a **positive relationship** between the two variables. In other words, the more distance a person covers with their tracker, the more steps they are likely to take. This could imply that people who use trackers are more motivated to walk or exercise more.
+
+
+**To check relationship between Calories and Activity**
+
+```{r}
+ggplot(data=FitbaseData_Calculated, aes(x=AVG_Calories, y=AVG_TrackerDistance,))+ 
+  geom_point() +
+  labs(title = "Scatter_plot", x = "AVG_Calories", y = "AVG_TrackerDistance")+
+  geom_smooth()
+```
+
+
+The above scatter plot shows the relationship between average calories burned and average tracker distance. The trend in the scatter plot is **positive**, meaning that as the average tracker distance increases, the average calories burned also increases. The relationship between the two variables is **linear**, meaning that they change at a constant rate. The points are **fairly close** to the line of best fit, indicating a **strong** correlation between the two variables. This suggests that there is a **direct** and **proportional** relationship between average calories burned and average tracker distance, and that the fitness tracker app is **accurate** in measuring both variables.
+
+
+## Conclusion
+Analyzing trends in Fitbit fitness tracker data offers valuable insights applicable to Bellabeat's customers:
+
+The data suggests a correlation between increased steps and reduced sedentary time, indicating that Bellabeat's products could encourage a more active lifestyle by minimizing sedentary behavior. Additionally, the inverse relationship between physical activity and sleep duration implies that Bellabeat's offerings may cater to individuals with active lifestyles, guiding potential adjustments in sleep-related features or recommendations.
+
+Furthermore, the positive correlation between tracker usage and physical activity emphasizes the motivational aspect of Bellabeat's products, suggesting they inspire users to be more active consistently. The positive relationship between tracker distance and calories burned indicates that Bellabeat's products accurately measures and supports users in achieving fitness goals, providing a comprehensive tool for managing and monitoring calorie expenditure.
+
+In summary, these insights will enable Bellabeat to customize communication with users, improve product features, and offer recommendations thereby enhancing user engagement and satisfaction. By promoting an active lifestyle, addressing sleep patterns, emphasizing tracker usage, and highlighting accurate fitness metric measurements, Bellabeat can effectively support its customers' holistic approach to health and well-being.
+
+
+## Recommendation
+
+Bellabeat, as a company, can leverage these insights to tailor its product features and marketing strategies. Based on the analysis of Fitbit fitness tracker data, the following recommendations are made for Bellabeat:
+
+1. **Promote Active Lifestyle:**
+   Emphasize products as catalysts for an active lifestyle, focusing on features that encourage increased steps and reduced sedentary time.
+
+2. **Tailor Sleep Support:**
+   Acknowledge the inverse relationship between physical activity and sleep duration. Consider tailoring sleep-related features or recommendations for users with active lifestyles.
+
+3. **Highlight Tracker Motivation:**
+   Leverage the positive correlation between tracker usage and physical activity. Emphasize how Bellabeat's products motivate users to maintain consistent physical activity through regular tracker use.
+
+4. **Emphasize Calorie Management:**
+   Capitalize on the positive relationship between tracker distance and calories burned. Promote Bellabeat's fitness tracker app as an accurate tool for managing and monitoring calorie expenditure.
+   
+5. **Promote Stress Management:**
+Integrate stress-related notifications in Bellabeat's Wellness watch, guiding users on optimal break times for enhanced well-being and productivity. Encourage a healthy work-life balance through personalized stress-aware notifications. Incorporating gamification elements, such as challenges and rewards, can further motivate users to manage stress effectively and maintain a balanced lifestyle.
+
+6. **Encourage Hydration:**
+Implement hydration-related reminders in the Time product using Bellabeat's Spring product for drinking water. Notifying users to maintain adequate water intake for improved health and vitality most especially during intense activities. This supports a healthier lifestyle, with timely hydration prompts tailored to individual needs.
+
+7. **Optimizing Female Health Features: Proactive Notifications**
+ Bellabeat being a female-focused company can enhance female health features with proactive notifications for menstruation, ovulation, and mood fluctuations using the **Time wellness watch** in addition to the Bellabeat app by;
+     * Emphasizing on real-time, personalized notifications for menstrual cycles, ovulation, and        mood. Position the product as a comprehensive health companion that actively supports and informs users about their unique female health journey.
+     * Communicate how Bellabeat empowers women with informed decisions about their health.Share user testimonials or stories that showcase how the inclusion of proactive notifications has positively impacted their wellness journeys.
+     * Provide content educating users on the significance of notifications for proactive health.
+     * Foster a supportive community for women to share experiences and tips. Facilitate discussions on social platforms or within the Bellabeat community to create a supportive space for women to exchange insights and tips, illustrating instances where timely notifications contributed to their improved health management and overall well-being.
+     
+By incorporating these recommendations, Bellabeat can align its marketing strategy and product features with the observed trends, enhancing user engagement and satisfaction among its customers.This will position Bellabeat as a brand that not only provides fitness tracking but also actively supports users in adopting a healthier and more balanced lifestyle. Tailoring messages to resonate with these trends can enhance user engagement and attract a wider audience seeking holistic health solutions.
+
+**While these trends offer valuable insights, it's crucial to acknowledge that correlation does not imply causation. Bellabeat may consider further research to understand the nuanced factors influencing these trends and refine its offerings accordingly.**
