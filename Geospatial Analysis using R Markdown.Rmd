@@ -1,0 +1,404 @@
+---
+title: "Geospatial Analysis using R"
+author: "Chinazom Okoli"
+date: "2025-05-17"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+```
+
+
+## Setting up R environment with essential packages.
+
+- **Installing Required Packages**
+
+
+```{r install-packages, results='hide'}
+   # install.packages(c("sf", "terra", "tmap", "leaflet", "ggplot2", "tidyverse", "spData", "rayshader", "viridis"))
+```
+
+- **Loading the packages**
+
+```{r load-libraries, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(sf)
+library(terra)
+library(tmap)
+library(leaflet)
+library(ggplot2)
+library(rayshader)
+library(viridis)
+library(tidyverse)
+library(spData)
+```
+
+```{r include=FALSE}
+data(package = "spData")
+```
+
+
+```{r}
+head(world)
+tail(world)
+sample(world)
+```
+
+```{r}
+glimpse(world)
+
+```
+
+
+```{r}
+class(world)
+```
+
+```{r}
+names(world)
+```
+
+```{r}
+str(world)
+```
+
+```{r}
+summary(world)
+
+```
+
+```{r}
+view(world)
+```
+
+```{r}
+sf::st_crs(world)
+
+```
+
+```{r}
+# View geometry type
+st_geometry_type(world) |> table()
+```
+
+
+```{r}
+# To view number of nulls per column
+colSums(is.na(world))
+```
+
+
+```{r}
+world %>% filter(is.na(gdpPercap))
+
+```
+
+
+```{r}
+# See rows where any column has NA
+# world[!complete.cases(world), ]
+
+```
+
+
+```{r}
+# Fill NA in gdpPercap with mean
+mean(world$gdpPercap, na.rm = TRUE)
+
+# world$gdpPercap[is.na(world$gdpPercap)] <- mean(world$gdpPercap, na.rm = TRUE)
+
+```
+
+```{r}
+# Exclude geom column using select()
+world %>% select(-geom)
+```
+
+```{r}
+world$gdpPercap[world$name_long == "Western Sahara"] <- 2800
+```
+
+
+### To filter 
+```{r}
+filter(world, name_long == "Nigeria")
+```
+
+```{r}
+# filtering using piping
+nigeria <- world %>% filter(name_long == "Nigeria")
+nigeria
+```
+
+
+```{r}
+Africa <- world %>% filter(continent == "Africa")
+Africa
+```
+
+```{r}
+world$continent
+```
+
+
+```{r}
+world$continent[world$continent == "North America"]
+```
+
+```{r}
+world %>%
+  filter(continent == "North America")
+```
+
+```{r}
+world[world$continent == "North America" & world$type == "Sovereign country", ]
+
+```
+
+
+```{r}
+world %>%
+  filter(continent == "North America", type == "Sovereign country")
+```
+
+
+### To create a map using R basic plot
+```{r}
+plot(nigeria["name_long"])
+```
+
+```{r}
+plot(Africa)
+```
+
+```{r}
+plot(Africa["geom"])
+```
+
+
+```{r}
+plot(st_geometry(Africa))
+```
+
+
+#### To modify the plot
+```{r}
+plot(st_geometry(Africa), 
+     main = "Map of Africa",
+     cex.main = 2,         # Title size
+     col = "lightblue",    # Fill color
+     border = "darkblue")  # Border color
+
+```
+
+#### Adding labels on the map 
+```{r}
+plot(st_geometry(Africa), main = "African Countries")
+text(st_coordinates(st_centroid(Africa)), labels = Africa$name_long, cex = 0.6)
+```
+
+#### Increasing the size of the map, title name and label name
+```{r, fig.width=30, fig.height=30}
+plot(st_geometry(Africa), 
+     main = "Map of Africa", cex.main = 5) 
+text(st_coordinates(st_centroid(Africa)), 
+     labels = Africa$name_long, cex = 2.5)
+```
+
+
+```{r, fig.width=30, fig.height=30}
+plot(st_geometry(Africa),
+     main = "Map of Africa", 
+     cex.main = 5, 
+     col = "lightblue", 
+     border = "darkgreen") 
+text(st_coordinates(st_centroid(Africa)), 
+     labels = Africa$name_long, 
+     cex = 2.5,
+     col = "black")
+```
+
+
+#### To highlight Nigeria using a different color
+```{r, fig.width=30, fig.height=30}
+country_colors <- ifelse(Africa$name_long == "Nigeria", "green", "black")
+
+plot(
+  st_geometry(Africa),          
+  main = "Map of Africa",       
+  cex.main = 5,                 
+  col = country_colors,           
+  border = "white")      
+text(st_coordinates(st_centroid(Africa)),  
+  labels = Africa$iso_a2,            
+  cex = 2.6,                            
+  col = "white"                       
+)
+
+```
+
+
+### Highlighting two countries
+```{r, fig.width=30, fig.height=30}
+congo_colors <- ifelse(Africa$name_long %in% c("Republic of the Congo", "Democratic Republic of the Congo"),
+  c("orange", "red")[match(Africa$name_long, c("Republic of the Congo", "Democratic Republic of the Congo"))],
+  "lightblue"
+)
+
+plot(
+  st_geometry(Africa),
+  main = "Map of Africa",
+  cex.main = 5,
+  col = congo_colors,
+  border = "black"
+)
+
+text(st_coordinates(st_centroid(Africa)),
+  labels = Africa$name_long,
+  cex = 2.0,
+  col = "black"
+)
+
+```
+
+
+### Choropleth map - GDP by continent, using color gradients to show differences in economic output.
+```{r}
+plot(Africa["gdpPercap"], main = "GDP per Capita in Africa")
+```
+
+
+## Creating map using  ggplot2
+
+```{r}
+ggplot(data = Africa) +
+  geom_sf(fill = "darkblue", color = "black") +
+  geom_sf_text(aes(label = name_long), size = 2, color = "white") +
+  ggtitle("Map of Africa")
+
+```
+
+
+```{r, fig.width= 30, fig.height= 30}
+ggplot(data = Africa) +
+  geom_sf(fill = "darkblue", color = "black") +
+  geom_sf_text(aes(label = name_long), size = 10, color = "white") +
+  ggtitle("Map of Africa")+
+ theme(plot.title = element_text(
+   size = 28, face = "bold", hjust = 0.5))
+```
+
+
+```{r}
+ggplot(data = Africa) +
+  geom_sf(aes(fill = subregion), color = "black") +
+  geom_sf_text(aes(label = iso_a2), size = 2.5, color = "white") +
+  ggtitle("Map of Africa") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 12, face = "bold", hjust = 0.5))
+
+```
+
+
+```{r}
+ggplot(data = world) +
+  geom_sf(aes(fill = continent), color = "white") +
+  ggtitle("World Map by Continent") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+```
+
+
+```{r}
+ggplot(Africa) +
+  geom_sf(aes(fill = gdpPercap)) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90", name = "GDP per Capita") +
+  theme_minimal() +
+  labs(title = "GDP per Capita in Africa")
+
+```
+
+```{r}
+ggplot(Africa) +
+  geom_sf(aes(fill = gdpPercap)) +
+  scale_fill_distiller(palette = "Blues", na.value = "grey90", name = "GDP per Capita") +
+  theme_minimal() +
+  labs(title = "GDP per Capita in Africa")
+```
+
+
+## tmap 
+```{r, warning=FALSE, message=FALSE}
+tmap_mode("view")  # Interactive map
+tm_shape(Africa) +
+  tm_polygons("gdpPercap", palette = "Blues", title = "GDP per Capita")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+tmap_mode("plot")
+
+tm_shape(world) +
+  tm_polygons("gdpPercap", palette = "Blues") +
+  tm_facets(by = "continent", ncol = 3) +
+  tm_layout(title = "GDP per Capita by continent")
+
+
+```
+
+
+
+### Leaflet 
+```{r}
+leaflet(Africa) %>%
+  addTiles() %>%
+  addPolygons(fillColor = ~colorNumeric("Blues", gdpPercap)(gdpPercap),
+              color = "black",
+              weight = 1,
+              opacity = 1,
+              fillOpacity = 0.7,
+              label = ~paste(name_long, "<br>", "GDP per Capita:", round(gdpPercap, 0))) %>%
+  addLegend(pal = colorNumeric("Blues", Africa$gdpPercap),
+            values = Africa$gdpPercap,
+            title = "GDP per Capita")
+
+```
+
+
+
+```{r}
+knitr::include_graphics("africa_gdp_3d.png")
+
+# Create a ggplot map (2D version)
+africa_map <- ggplot(Africa) +
+  geom_sf(aes(fill = gdpPercap), color = "black", size = 0.2) +
+  scale_fill_viridis(option = "C", na.value = "grey90", name = "GDP per Capita") +
+  theme_minimal() +
+  labs(title = "GDP per Capita in Africa")
+
+# Convert to 3D using rayshader
+plot_gg(africa_map,
+        multicore = TRUE,
+        width = 5,
+        height = 5,
+        scale = 300,        # Adjust this for exaggeration
+        windowsize = c(1000, 800),
+        zoom = 0.6,
+        phi = 40,
+        theta = 135,
+        fov = 60)
+```
+
+
+```{r}
+# Save the 3D snapshot
+# render_snapshot("africa_gdp_3d.png")
+```
+
